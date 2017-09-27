@@ -47,8 +47,8 @@ function solid(x,y)
  if fget(val)>0 then return true end
 end
 
-function animate(obj,num_frames)
- obj.anim=(obj.anim+.1)%num_frames
+function animate(obj,num_frames,anim_speed)
+ obj.anim=(obj.anim+.1+anim_speed)%num_frames
 end
 
 function movement()
@@ -82,7 +82,7 @@ function movement()
      dx-=0.13
     end
    end
-   animate(player,3)
+   animate(player,3,dx/8)
   end
    
   --moving right
@@ -104,7 +104,7 @@ function movement()
      dx+=0.13
     end
    end
-   animate(player,3) 
+   animate(player,3,dx/8) 
   end
   
   --if grounded
@@ -117,7 +117,22 @@ function movement()
     	dy=-2.4
     	hj=true
     end
-   end 
+   end
+   --x to sprint
+   if btn(5) then
+   	--left
+   	if btn(0) then
+   		if dx > -2 then
+   			dx-=0.13
+   		end
+   	end
+   	--right
+   	if btn(1) then
+   		if dx < 2 then
+   			dx+=0.13
+   		end
+   	end
+   end
   end
   
   if not btn(4) then hj=false end
