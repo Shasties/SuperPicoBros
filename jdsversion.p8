@@ -11,23 +11,43 @@ player={
         dy=0,
         --two states, grounded (0) and falling (1)
         state=0,
-        speed=2,
         sprite=128,
         lives=3,
         --spawn point for checkpoint
-check_x=32,
-check_y=88,
+check_x=16,
+check_y=64,
 w=8,
-h=8
+h=8,
+anim=0,
+d=false,
+coins=0,
+score=0
 }
 colx=0
 scrollx=0
+t=time()+400
+end
+
+function draw_hud()
+print("mario",16,4,7)
+print(player.score,16,10,7)
+spr(57,40,10)
+print("x",50,14)
+print(player.coins,56,14)
+print("world", 70,4,7)
+print("1-1", 72,10,7)
+print("time", 100,4,7)
+print(flr(t-time()),102,10,7)
 end
 
 --is something solid?
 function solid(x,y)
 val=mget(x/8,y/8)
 if fget(val,0) then return true end
+end
+
+function animate(obj,num_frames)
+ obj.anim=(obj.anim+1)%num_frames
 end
 
 function movement()
@@ -38,110 +58,122 @@ function movement()
  local y=player.y
  local dx=player.dx
  local dy=player.dy
- local speed=player.speed
+ local d=player.d
+  
+ if y+h>132 then player.lives-=1 x=player.check_x y=player.check_y colx=0 scrollx=0 end
  if player.lives==0 then
- 	--todo: endgame
+ 	_init()
  end
 
  --is falling?
- if not solid(x,y+h) then
+ if not solid(x,y+h) then 
  	player.state=1
  else 
  	player.state=0 
- 	dy=0 
+ 	player.dy=0 
  end
-
+ 
  --moving left
  if btn(0) then
- 	--set sprite to face left
- 	if x<=0 then x=0
- 	elseif not solid(x,y) then x-=speed end
+  d=true
+ 	if x<=0 then 
+ 		dx=0
+ 	elseif not solid(x,y) then
+ 		if dx > -1 then 
+	 		dx-=0.13
+			end
+ 		animate(player,3)
+ 	end
  end
   
  --moving right
  if btn(1) then
-	 --set sprite to face right
-	 if x>=32 then 
-	 	x=32
-	 	scrollx+=speed
-	 	if scrollx>8 then 
-	 		colx+=1
-	 		scrollx=0
-	 	end
-	 end
-	 if not solid(x+w,y) then
-	 	if dx < 2 then 
-	 		dx+=0.21
-	 	end
-	 end
+  d=false
+  if x>32 then
+   x=32
+   if dx < 1.2 then
+   	dx+=0.13
+   end
+ 		scrollx+=dx
+ 		if scrollx>8 then 
+ 			colx+=1
+ 			scrollx=0 
+ 		end
+ 	elseif not collision(x+w,y,dx,dy) then 
+ 		if dx < 1.2 then
+ 			dx+=0.13
+ 		end
+ 		animate(player,3) 
+ 	end
  end
  
  --if grounded
  if player.state==0 then
+ 	dy=0
 	 --z to jump
 	 if btn(4) then
 	  player.state=1
-	  dy = -4.3
-	  end
+	  dy=-2.4
+  end
  end
 
  if player.state==1 then
   if solid(x,y-2) or solid(x+6,y-2) then 
-   dy=1
- 	end
- 	--gravity
-  if dy < 0 then
-   dy += 0.3
-  elseif dy > 0 then
-   dy += 0.4
+  	dy=1 
   end
-  dy += 0.1
   --holding z
-  if btn(4) then
-  	dy -= 0.15
-  end
+		if btn(4) then
+			if dy < -2 then
+				dy-=0.11
+			end
+			dy-=0.03
+		end
+ 	dy+=0.18
+ 	--max fall speed
+ 	if dy > 2 then
+ 		dy=2
+ 	end
  end
  
  --horizontal inertia
- if dx > 0 then
-  dx -= 0.07
-  if player.state == 0 then
-   dx -= 0.04
-  end
- elseif dx < 0 then
-  dx += 0.07
-  if player.state == 0 then
-  	dx += 0.04
-  end
- end
-
-	--apply modifiers
- y += dy
- if dx < -0.12 then
-  x += dx
- elseif dx > 0.12 then
-  x += dx
- end
- 
- if x < 32 or dx < 0 then
-		player.x=x
-	else
-		scrollx+=dx
-		player.x=32
+	if dx > 0 then
+		dx -= 0.07
+		if player.state == 0 then
+			dx -= 0.04
+		end
+	elseif dx < 0 then
+		dx += 0.07
+		if player.state == 0 then
+			dx += 0.04
+		end
 	end
-	player.y=y
-	player.dx=dx
-	player.dy=dy
-
-	--if btn(2) then player.y-=3 end
-	--if btn(3) then player.y+=3 end
+ 
+ --apply modifiers
+ y += dy
+	if dx < -0.12 then
+			x += dx
+	elseif dx > 0.12 then
+		if x > 32 then
+			x=32
+			scrollx += dx
+		else
+			x += dx
+		end
+	end
+ 
+ player.x=x
+ player.y=y
+ player.dx=dx
+ player.dy=dy
+ player.d=d
+ if solid(x+w,y) or solid(x+w,y) then player.x-=player.x%8 end
+ if solid(x,y+h) or solid(x+w,y+h) then player.y-=player.y%8 end
 end
 
 function draw_map()
  for c=0,16 do 
  	for r=0,15 do
  		cell=sub(m,1+colx*48+c*48+r*3,colx*48+c*48+r*3+3)
- 		--print(cell)
  		mset(c,r,cell)
  	end
  end 
@@ -149,14 +181,21 @@ end
 
 function _update60()
 	movement()
- draw_map()
 end
+
+function collision(x,y,dx,dy)
+	nex=mget((x+dx)/8,(y+dy)/8)
+	if fget(nex)>=1 then return true end
+end	
 
 function _draw()
 	cls()
+	map(59,0,0,0,16,16)
+	draw_map()
 	map(0,0,-scrollx,0,17,16)
-	print()
-	spr(player.sprite,player.x,player.y)
+	draw_hud()
+	spr(player.sprite+player.anim,player.x,player.y,1,1,player.d)
+ print(mget((player.x+player.dx)/8,(player.y+player.dy)/8),100,100,7)
 end
 __gfx__
 0000000000000000999949947999999497777774d777777d1377731111111111000000000000000000ffffffff79000000000000000000000000000000015000
