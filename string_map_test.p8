@@ -14,15 +14,30 @@ player={
         sprite=128,
         lives=3,
         --spawn point for checkpoint
-check_x=32,
-check_y=88,
+check_x=16,
+check_y=64,
 w=8,
 h=8,
 anim=0,
-d=false
+d=false,
+coins=0,
+score=0
 }
 colx=0
 scrollx=0
+t=time()+400
+end
+
+function draw_hud()
+print("mario",16,4,7)
+print(player.score,16,10,7)
+spr(57,40,10)
+print("x",50,14)
+print(player.coins,56,14)
+print("world", 70,4,7)
+print("1-1", 72,10,7)
+print("time", 100,4,7)
+print(flr(t-time()),102,10,7)
 end
 
 --is something solid?
@@ -47,15 +62,16 @@ function movement()
  local y=player.y
  local speed=player.speed
  local d=player.d
- 
+  
+ if y+h>132 then player.lives-=1 x=player.check_x y=player.check_y colx=0 scrollx=0 end
  if player.lives==0 then
- --todo: endgame
+ _init()
  end
 
  --is falling?
  if not solid(x,y+h) then player.state=1
  else player.state=0 player.yv=0 end
-
+ 
  --moving left
  if btn(0) then
   d=true
@@ -70,7 +86,7 @@ function movement()
  	x=32
  	scrollx+=speed
  	if scrollx>8 then colx+=1 scrollx=0 end
- elseif not solid(x+w,y) then x+=speed animate(player,3) end
+ elseif not collision(x+w,y,speed,player.yv) then x+=speed animate(player,3) end
  end
  --if grounded
  if player.state==0 then
@@ -85,14 +101,12 @@ function movement()
   if solid(x,y-2) or solid(x+6,y-2) then player.yv=1 end
  player.yv+=.2
  end
-
+ 
  player.x=x
  player.y=y+player.yv
  player.d=d
  if solid(x+w,y) or solid(x+w,y) then player.x-=player.x%8 end
  if solid(x,y+h) or solid(x+w,y+h) then player.y-=player.y%8 end
-	--if btn(2) then player.y-=3 end
-	--if btn(3) then player.y+=3 end
 end
 
 function draw_map()
@@ -108,13 +122,19 @@ function _update60()
 	movement()
 end
 
+function collision(x,y,dx,dy)
+	nex=mget((x+dx)/8,(y+dy)/8)
+	if fget(nex)>=1 then return true end
+end	
 
 function _draw()
 	cls()
 	map(59,0,0,0,16,16)
 	draw_map()
 	map(0,0,-scrollx,0,17,16)
+	draw_hud()
 	spr(player.sprite+player.anim,player.x,player.y,1,1,player.d)
+ print(mget((player.x+player.speed)/8,(player.y+player.yv)/8),100,100,7)
 end
 __gfx__
 0000000000000000999949947999999497777774d777777d1377731111111111000000000000000000ffffffff79000000000000000000000000000000015000
