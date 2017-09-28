@@ -66,7 +66,7 @@ function movement()
  if y+h>132 then hj=false player.lives-=1 player.state=2
  else
    --is falling?
-  if not solid(x-1,y+8) and not solid(x+(w-1),y+8) then 
+  if not solid(x+2,y+8) and not solid(x+(w-1),y+8) then 
    player.state=1
   else
    player.state=0 
@@ -83,7 +83,9 @@ function movement()
   --moving left
   if btn(0) then
    d=true
-   if solid(x,y) or solid(x,y+7) then dx=0
+   if solid(x,y) or solid(x,y+7) then 
+   	dx=0
+   	x+=1
    elseif x<=0 then 
     dx=0
    elseif not solid(x,y) or solid(x,y+7) then
@@ -108,7 +110,7 @@ function movement()
    d=false
    if solid(x+w,y) or solid(x+w,y+7) then 
    	dx=0
-   	x-=1 
+   	x-=1
    elseif x>32 then
     x=32
     scrollx+=(x-32)
@@ -152,11 +154,11 @@ function movement()
     end
    end
    --wall clip fix
-   --if solid(x+w,y) or solid(x+w,y+7) then
-   	--x-=1
-   --elseif solid(x,y) or solid(x,y+7) then
-   	--x+=1 
-   --end
+   if solid(x+w,y) or solid(x+w,y+7) then
+   	x-=1
+   elseif solid(x,y) or solid(x,y+7) then
+   	x+=1 
+   end
   end
   
   if not btn(4) then hj=false end
@@ -286,8 +288,8 @@ function _draw()
  spr(player.sprite+player.anim,player.x,player.y,1,1,player.d)
  print(player.state,100,100)
  print(player.dy,100,90)
- rectfill(player.x,player.y,player.x,player.y)
- rectfill(player.x+player.w,player.y+player.h,player.x+player.w,player.y+player.h)
+ --rectfill(player.x,player.y,player.x,player.y)
+ --rectfill(player.x+player.w,player.y+player.h,player.x+player.w,player.y+player.h)
 end
 
 function animate_coin(cell_x, cell_y)		
